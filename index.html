@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSV Color Wheel Picker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-theme {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .container.dark-theme {
+            background: #2a2a3e;
+            color: #e0e0e0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .theme-toggle {
+            background: #667eea;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .theme-toggle:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .container.dark-theme .theme-toggle {
+            background: #764ba2;
+        }
+
+        .container.dark-theme .theme-toggle:hover {
+            background: #667eea;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            transition: color 0.3s ease;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .container.dark-theme h1 {
+            color: #e0e0e0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .color-picker-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .color-wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        #colorWheel {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        .container.dark-theme #colorWheel {
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .picker-dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .container.dark-theme .picker-dot {
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .value-slider-container {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .container.dark-theme .slider-label {
+            color: #a0a0a0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #000, #fff);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: background 0.3s ease;
+        }
+
+        .container.dark-theme input[type="range"] {
+            background: linear-gradient(to right, #444, #aaa);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid #667eea;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid #667eea;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #ddd;
+            transition: border-color 0.3s ease;
+        }
+
+        .container.dark-theme .color-preview {
+            border-color: #444;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .inputs-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .input-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: background 0.3s ease;
+        }
+
+        .container.dark-theme .input-group {
+            background: #3a3a52;
+        }
+
+        .input-group h3 {
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+        }
+
+        .container.dark-theme .input-group h3 {
+            color: #e0e0e0;
+        }
+
+        .input-fields {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+
+        .container.dark-theme .input-field label {
+            color: #a0a0a0;
+        }
+
+        .input-field input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            background: white;
+            color: #333;
+        }
+
+        .container.dark-theme .input-field input {
+            background: #4a4a62;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .container.dark-theme .input-field input:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .input-group.hsv {
+            border-left-color: #667eea;
+        }
+
+        .input-group.hsl {
+            border-left-color: #f093fb;
+        }
+
+        .input-group.rgb {
+            border-left-color: #4facfe;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .header {
+                flex-direction: column;
+                margin-bottom: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+                margin-bottom: 0;
+            }
+
+            .theme-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 HSV Color Wheel Picker</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark Mode</span>
+            </button>
+        </div>
+        
+        <div class="main-content">
+            <!-- Color Picker Section -->
+            <div class="color-picker-section">
+                <div class="color-wheel-container">
+                    <canvas id="colorWheel"></canvas>
+                    <div class="picker-dot" id="pickerDot"></div>
+                </div>
+
+                <div class="value-slider-container">
+                    <div class="slider-label">
+                        <span>Brightness (Value)</span>
+                        <span id="vDisplay">100%</span>
+                    </div>
+                    <input type="range" id="valueSlider" min="0" max="100" value="100">
+                </div>
+
+                <div class="color-preview" id="colorPreview"></div>
+            </div>
+
+            <!-- Input Fields Section -->
+            <div class="inputs-section">
+                <!-- HSV Inputs -->
+                <div class="input-group hsv">
+                    <h3>HSV</h3>
+                    <div class="input-fields">
+                        <div class="input-field">
+                            <label for="hsvH">H (0-360)</label>
+                            <input type="number" id="hsvH" min="0" max="360" value="0">
+                        </div>
+                        <div class="input-field">
+                            <label for="hsvS">S (0-100)</label>
+                            <input type="number" id="hsvS" min="0" max="100" value="100">
+                        </div>
+                        <div class="input-field">
+                            <label for="hsvV">V (0-100)</label>
+                            <input type="number" id="hsvV" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HSL Inputs -->
+                <div class="input-group hsl">
+                    <h3>HSL</h3>
+                    <div class="input-fields">
+                        <div class="input-field">
+                            <label for="hslH">H (0-360)</label>
+                            <input type="number" id="hslH" min="0" max="360" value="0">
+                        </div>
+                        <div class="input-field">
+                            <label for="hslS">S (0-100)</label>
+                            <input type="number" id="hslS" min="0" max="100" value="100">
+                        </div>
+                        <div class="input-field">
+                            <label for="hslL">L (0-100)</label>
+                            <input type="number" id="hslL" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RGB Inputs -->
+                <div class="input-group rgb">
+                    <h3>RGB</h3>
+                    <div class="input-fields">
+                        <div class="input-field">
+                            <label for="rgbR">R (0-255)</label>
+                            <input type="number" id="rgbR" min="0" max="255" value="255">
+                        </div>
+                        <div class="input-field">
+                            <label for="rgbG">G (0-255)</label>
+                            <input type="number" id="rgbG" min="0" max="255" value="0">
+                        </div>
+                        <div class="input-field">
+                            <label for="rgbB">B (0-255)</label>
+                            <input type="number" id="rgbB" min="0" max="255" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Color conversion functions
+        const ColorConverter = {
+            // HSV to RGB
+            hsvToRgb(h, s, v) {
+                h = h % 360;
+                s = s / 100;
+                v = v / 100;
+
+                const c = v * s;
+                const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                const m = v - c;
+
+                let r, g, b;
+
+                if (h < 60) {
+                    r = c; g = x; b = 0;
+                } else if (h < 120) {
+                    r = x; g = c; b = 0;
+                } else if (h < 180) {
+                    r = 0; g = c; b = x;
+                } else if (h < 240) {
+                    r = 0; g = x; b = c;
+                } else if (h < 300) {
+                    r = x; g = 0; b = c;
+                } else {
+                    r = c; g = 0; b = x;
+                }
+
+                return [
+                    Math.round((r + m) * 255),
+                    Math.round((g + m) * 255),
+                    Math.round((b + m) * 255)
+                ];
+            },
+
+            // RGB to HSV
+            rgbToHsv(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const d = max - min;
+
+                let h = 0;
+                if (d !== 0) {
+                    if (max === r) {
+                        h = 60 * (((g - b) / d) % 6);
+                    } else if (max === g) {
+                        h = 60 * (((b - r) / d) + 2);
+                    } else {
+                        h = 60 * (((r - g) / d) + 4);
+                    }
+                }
+
+                if (h < 0) h += 360;
+
+                const s = max === 0 ? 0 : (d / max) * 100;
+                const v = max * 100;
+
+                return [Math.round(h), Math.round(s), Math.round(v)];
+            },
+
+            // HSV to HSL
+            hsvToHsl(h, s, v) {
+                const [r, g, b] = this.hsvToRgb(h, s, v);
+                return this.rgbToHsl(r, g, b);
+            },
+
+            // HSL to HSV
+            hslToHsv(h, s, l) {
+                const [r, g, b] = this.hslToRgb(h, s, l);
+                return this.rgbToHsv(r, g, b);
+            },
+
+            // HSL to RGB
+            hslToRgb(h, s, l) {
+                h = h % 360;
+                s = s / 100;
+                l = l / 100;
+
+                const c = (1 - Math.abs(2 * l - 1)) * s;
+                const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                const m = l - c / 2;
+
+                let r, g, b;
+
+                if (h < 60) {
+                    r = c; g = x; b = 0;
+                } else if (h < 120) {
+                    r = x; g = c; b = 0;
+                } else if (h < 180) {
+                    r = 0; g = c; b = x;
+                } else if (h < 240) {
+                    r = 0; g = x; b = c;
+                } else if (h < 300) {
+                    r = x; g = 0; b = c;
+                } else {
+                    r = c; g = 0; b = x;
+                }
+
+                return [
+                    Math.round((r + m) * 255),
+                    Math.round((g + m) * 255),
+                    Math.round((b + m) * 255)
+                ];
+            },
+
+            // RGB to HSL
+            rgbToHsl(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const d = max - min;
+                const l = (max + min) / 2;
+
+                let h = 0;
+                let s = 0;
+
+                if (d !== 0) {
+                    s = d / (1 - Math.abs(2 * l - 1));
+                    if (max === r) {
+                        h = 60 * (((g - b) / d) % 6);
+                    } else if (max === g) {
+                        h = 60 * (((b - r) / d) + 2);
+                    } else {
+                        h = 60 * (((r - g) / d) + 4);
+                    }
+                }
+
+                if (h < 0) h += 360;
+
+                return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+            }
+        };
+
+        // UI Elements
+        const canvas = document.getElementById('colorWheel');
+        const ctx = canvas.getContext('2d');
+        const pickerDot = document.getElementById('pickerDot');
+        const valueSlider = document.getElementById('valueSlider');
+        const vDisplay = document.getElementById('vDisplay');
+        const colorPreview = document.getElementById('colorPreview');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+        const container = document.querySelector('.container');
+        const body = document.body;
+
+        // HSV inputs
+        const hsvH = document.getElementById('hsvH');
+        const hsvS = document.getElementById('hsvS');
+        const hsvV = document.getElementById('hsvV');
+
+        // HSL inputs
+        const hslH = document.getElementById('hslH');
+        const hslS = document.getElementById('hslS');
+        const hslL = document.getElementById('hslL');
+
+        // RGB inputs
+        const rgbR = document.getElementById('rgbR');
+        const rgbG = document.getElementById('rgbG');
+        const rgbB = document.getElementById('rgbB');
+
+        let currentH = 0;
+        let currentS = 100;
+        let currentV = 100;
+        let isMouseDown = false;
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Initialize theme from localStorage
+        function initTheme() {
+            if (isDarkMode) {
+                body.classList.add('dark-theme');
+                container.classList.add('dark-theme');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light Mode';
+            }
+        }
+
+        // Toggle theme
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+
+            body.classList.toggle('dark-theme');
+            container.classList.toggle('dark-theme');
+
+            if (isDarkMode) {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light Mode';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark Mode';
+            }
+        });
+
+        // Draw color wheel
+        function drawColorWheel() {
+            const radius = canvas.width / 2;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw wheel
+            for (let angle = 0; angle < 360; angle += 1) {
+                for (let distance = 0; distance < radius; distance += 1) {
+                    const saturation = (distance / radius) * 100;
+                    const hue = angle;
+                    const value = (valueSlider.value / 100) * 100;
+
+                    const [r, g, b] = ColorConverter.hsvToRgb(hue, saturation, value);
+                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+
+                    const rad = (angle * Math.PI) / 180;
+                    const x = centerX + distance * Math.cos(rad);
+                    const y = centerY + distance * Math.sin(rad);
+
+                    ctx.fillRect(x, y, 2, 2);
+                }
+            }
+        }
+
+        // Update picker dot position
+        function updatePickerDot() {
+            const radius = canvas.width / 2;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            const rad = (currentH * Math.PI) / 180;
+            const distance = (currentS / 100) * radius;
+
+            const x = centerX + distance * Math.cos(rad);
+            const y = centerY + distance * Math.sin(rad);
+
+            pickerDot.style.left = x + 'px';
+            pickerDot.style.top = y + 'px';
+        }
+
+        // Update all displays
+        function updateAllDisplays() {
+            // Update color wheel and picker
+            drawColorWheel();
+            updatePickerDot();
+
+            // Update preview
+            const [r, g, b] = ColorConverter.hsvToRgb(currentH, currentS, currentV);
+            colorPreview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+            // Update HSV inputs
+            hsvH.value = currentH;
+            hsvS.value = currentS;
+            hsvV.value = currentV;
+
+            // Update HSL inputs
+            const [hslHval, hslSval, hslLval] = ColorConverter.hsvToHsl(currentH, currentS, currentV);
+            hslH.value = hslHval;
+            hslS.value = hslSval;
+            hslL.value = hslLval;
+
+            // Update RGB inputs
+            rgbR.value = r;
+            rgbG.value = g;
+            rgbB.value = b;
+
+            // Update V display
+            vDisplay.textContent = valueSlider.value + '%';
+        }
+
+        // Function to pick color from coordinates
+        function pickColorFromCoords(x, y) {
+            const rect = canvas.getBoundingClientRect();
+            const localX = x - rect.left;
+            const localY = y - rect.top;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            const dx = localX - centerX;
+            const dy = localY - centerY;
+
+            let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const radius = canvas.width / 2;
+            const saturation = Math.min((distance / radius) * 100, 100);
+
+            currentH = Math.round(angle);
+            currentS = Math.round(saturation);
+
+            updateAllDisplays();
+        }
+
+        // Canvas mouse down to start dragging
+        canvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            pickColorFromCoords(e.clientX, e.clientY);
+        });
+
+        // Canvas mouse move while dragging
+        document.addEventListener('mousemove', (e) => {
+            if (isMouseDown) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX;
+                const y = e.clientY;
+
+                // Check if mouse is still over the canvas
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    pickColorFromCoords(x, y);
+                }
+            }
+        });
+
+        // Canvas mouse up to stop dragging
+        document.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        // Canvas click to pick color (fallback for single click)
+        canvas.addEventListener('click', (e) => {
+            pickColorFromCoords(e.clientX, e.clientY);
+        });
+
+        // Value slider change
+        valueSlider.addEventListener('input', (e) => {
+            currentV = parseInt(e.target.value);
+            updateAllDisplays();
+        });
+
+        // HSV input changes
+        hsvH.addEventListener('input', (e) => {
+            currentH = Math.max(0, Math.min(360, parseInt(e.target.value) || 0));
+            hsvH.value = currentH;
+            updateAllDisplays();
+        });
+
+        hsvS.addEventListener('input', (e) => {
+            currentS = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+            hsvS.value = currentS;
+            updateAllDisplays();
+        });
+
+        hsvV.addEventListener('input', (e) => {
+            currentV = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+            hsvV.value = currentV;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        // HSL input changes
+        hslH.addEventListener('input', (e) => {
+            const h = Math.max(0, Math.min(360, parseInt(e.target.value) || 0));
+            const s = parseInt(hslS.value) || 0;
+            const l = parseInt(hslL.value) || 0;
+            const [hNew, sNew, vNew] = ColorConverter.hslToHsv(h, s, l);
+            currentH = hNew;
+            currentS = sNew;
+            currentV = vNew;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        hslS.addEventListener('input', (e) => {
+            const h = parseInt(hslH.value) || 0;
+            const s = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+            const l = parseInt(hslL.value) || 0;
+            const [hNew, sNew, vNew] = ColorConverter.hslToHsv(h, s, l);
+            currentH = hNew;
+            currentS = sNew;
+            currentV = vNew;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        hslL.addEventListener('input', (e) => {
+            const h = parseInt(hslH.value) || 0;
+            const s = parseInt(hslS.value) || 0;
+            const l = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+            const [hNew, sNew, vNew] = ColorConverter.hslToHsv(h, s, l);
+            currentH = hNew;
+            currentS = sNew;
+            currentV = vNew;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        // RGB input changes
+        rgbR.addEventListener('input', (e) => {
+            const r = Math.max(0, Math.min(255, parseInt(e.target.value) || 0));
+            const g = parseInt(rgbG.value) || 0;
+            const b = parseInt(rgbB.value) || 0;
+            const [hNew, sNew, vNew] = ColorConverter.rgbToHsv(r, g, b);
+            currentH = hNew;
+            currentS = sNew;
+            currentV = vNew;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        rgbG.addEventListener('input', (e) => {
+            const r = parseInt(rgbR.value) || 0;
+            const g = Math.max(0, Math.min(255, parseInt(e.target.value) || 0));
+            const b = parseInt(rgbB.value) || 0;
+            const [hNew, sNew, vNew] = ColorConverter.rgbToHsv(r, g, b);
+            currentH = hNew;
+            currentS = sNew;
+            currentV = vNew;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        rgbB.addEventListener('input', (e) => {
+            const r = parseInt(rgbR.value) || 0;
+            const g = parseInt(rgbG.value) || 0;
+            const b = Math.max(0, Math.min(255, parseInt(e.target.value) || 0));
+            const [hNew, sNew, vNew] = ColorConverter.rgbToHsv(r, g, b);
+            currentH = hNew;
+            currentS = sNew;
+            currentV = vNew;
+            valueSlider.value = currentV;
+            updateAllDisplays();
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            canvas.width = 300;
+            canvas.height = 300;
+            initTheme();
+            updateAllDisplays();
+        });
+    </script>
+</body>
+</html>
